@@ -115,8 +115,10 @@ you can manually run `trunk-compress` at the backend directory and see what exac
 
 ```
 ❯ trunk-compress
-2023-12-19T08:21:48.104332Z  WARN trunk_compress: removing outdated asset "../frontend/dist/brotli/assets/my-image-saadf23842dd38.svg.br" because of hash mismatch
+2023-12-19T08:21:48.104332Z  WARN trunk_compress: removing outdated asset "../frontend/dist/brotli/assets/my-image-x9ysdfktryu3846f.svg.br" because of hash mismatch
 2023-12-19T08:21:48.104385Z  INFO trunk_compress: removing outdated file "../frontend/dist/brotli/logo-68ye460831c5276f.svg.br" because can't find identity file
+2023-12-19T08:21:48.104400Z  INFO trunk_compress: outputing target "../frontend/dist/brotli/assets/my-image-844dswidc8329904.svg.br"
+2023-12-19T08:21:48.130450Z  INFO trunk_compress: Done compressing my-image.svg
 2023-12-19T08:21:48.104520Z  INFO trunk_compress: outputing target "../frontend/dist/brotli/frontend-d8e8be0b5ce78d74.js.br"
 2023-12-19T08:21:48.130719Z  INFO trunk_compress: Done compressing frontend-d8e8be0b5ce78d74.js
 2023-12-19T08:21:48.130744Z  INFO trunk_compress: outputing target "../frontend/dist/brotli/frontend-d8e8be0b5ce78d74_bg.wasm.br"
