@@ -133,5 +133,5 @@ jobs:
           if [[ "${{ needs.init.outputs.prerelease }}" == "true" ]]; then
             OPTS="${OPTS} -p"
           fi
-          gh release create ${OPTS} --title "${{ needs.init.outputs.version }}" -F RELEASE_LOG.md ${TAG} \
-            trunk-*/trunk-*
+          gh release create ${OPTS} --title "${{ needs.init.outputs.version }}" ${TAG} \
+            trunk-compress/trunk-compress
