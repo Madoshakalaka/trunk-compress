@@ -101,9 +101,9 @@ jobs:
         if: matrix.cross != 'true'
         working-directory: upload
         run: |
-          ls -l trunk
-          strip trunk
-          ls -l trunk
+          ls -l trunk-compress
+          strip trunk-compress
+          ls -l trunk-compress
           
       - name: Post Build | Upload artifacts
         uses: actions/upload-artifact@v3
