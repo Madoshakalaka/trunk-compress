@@ -107,4 +107,4 @@ It also has a feature gate `compression` that when disabled, serves everything u
 
 It's not extracted into a crate yet.
 
-Please refer to [serve_yew.rs]() and adapt to your own usage. If you use the compression feature, I recommend gating the `main()` in `build.rs` with `#[cfg(feature = "compression")]`
+Please refer to [serve_yew.rs](serve_yew.rs) and adapt to your own usage. If you use the compression feature, I recommend gating the `main()` in `build.rs` with `#[cfg(feature = "compression")]`
