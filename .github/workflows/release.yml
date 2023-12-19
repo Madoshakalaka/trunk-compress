@@ -1,0 +1,137 @@
+name: Release
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  init:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{steps.version.outputs.version}}
+      prerelease: ${{steps.state.outputs.prerelease}}
+    steps:
+      - name: Evaluate state
+        id: state
+        env:
+          HEAD_REF: ${{github.head_ref}}
+        run: |
+          test -z "${HEAD_REF}" && (echo 'do-publish=true' >> $GITHUB_OUTPUT)
+          if [[ "${{ github.event.ref }}" =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo release=true >> $GITHUB_OUTPUT
+          elif [[ "${{ github.event.ref }}" =~ ^refs/tags/v.*$ ]]; then
+              echo prerelease=true >> $GITHUB_OUTPUT
+          fi
+      - name: Set version
+        id: version
+        run: |
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
+          [ "$VERSION" == "main" ] && VERSION=latest
+          echo "Version: $VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            name: trunk-compress
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Setup | Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup | Cache Cargo
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Setup | Rust
+        run: |
+          rustup toolchain install stable --target ${{ matrix.target }} --profile minimal
+          rustup default stable
+
+      - name: Build | Build
+        shell: bash
+        run: |
+          
+          CMD="cargo"
+          
+          OPTS="--release"
+          
+          if [[ -n "${{ matrix.target }}" ]]; then
+            OPTS="$OPTS --target=${{ matrix.target }}"
+          fi
+
+          ${CMD} build ${OPTS}
+
+      - name: Post Build | List output
+        shell: bash
+        run: |
+          ls -l target/
+
+      - name: Post Build | Move binary
+        shell: bash
+        run: |
+          mkdir -p upload
+          
+          if [[ -f "target/${{ matrix.target }}/release/trunk-compress" ]]; then
+            SRC="target/${{ matrix.target }}/release/trunk-compress"
+          else
+            echo "Unable to find output"
+            find target
+            false # stop build
+          fi
+          
+          # for upload
+          cp -pv "${SRC}" upload/trunk-compress
+
+      - name: Post Build | Strip binary
+        if: matrix.cross != 'true'
+        working-directory: upload
+        run: |
+          ls -l trunk
+          strip trunk
+          ls -l trunk
+          
+      - name: Post Build | Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.name }}
+          path: upload/${{ matrix.name }}
+          if-no-files-found: error
+
+  release:
+    needs: [init, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup | Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup | Artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Build | Publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: v${{ needs.init.outputs.version }}
+        run: |
+          OPTS=""
+          if [[ "${{ needs.init.outputs.prerelease }}" == "true" ]]; then
+            OPTS="${OPTS} -p"
+          fi
+          gh release create ${OPTS} --title "${{ needs.init.outputs.version }}" -F RELEASE_LOG.md ${TAG} \
+            trunk-*/trunk-*
