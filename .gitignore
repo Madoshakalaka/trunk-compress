@@ -1,0 +1,4 @@
+/target/
+
+# neovim project specific configs
+.nvim.lua
