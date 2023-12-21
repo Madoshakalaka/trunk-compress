@@ -37,7 +37,6 @@ your_workspace
 │   │   └── ...
 │   ├── Cargo.toml
 │   ├── dist
-│   │   └── identity
 │   └── src
 │       └── ...
 └── ...
@@ -47,7 +46,7 @@ The name `assets` is important, it is expected to host media files like videos, 
 
 The name `frontend` is important.
 
-dist must have an `identity` folder to start with. It's recommended to add this to `Trunk.toml`:
+It's recommended to add this to `Trunk.toml`:
 
 ```toml
 [build]

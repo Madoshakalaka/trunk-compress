@@ -127,6 +127,18 @@ impl GenerationSpec {
 }
 
 async fn compress() {
+    let identity_dir = Path::new(FRONTEND_DIR).join("identity");
+    if !identity_dir.exists() {
+        info!("identity directory does not exist, creating");
+        tokio::fs::create_dir_all(identity_dir).await.ok();
+    }
+    let brotli_dir = Path::new(FRONTEND_DIR).join("brotli");
+    if !brotli_dir.exists() {
+        info!("brotli directory does not exist, creating");
+        tokio::fs::create_dir_all(brotli_dir).await.ok();
+    }
+    // todo: use the above variables consistently across the codebase
+
     let identity_files: Vec<DirEntry> = identity_files().collect();
 
     let compression_dir = Path::new(FRONTEND_DIR).join("brotli");
