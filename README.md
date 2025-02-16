@@ -1,4 +1,4 @@
-This is what you will get with the help of `trunk-compress`:
+This is what `trunk-compress` generates:
 
 ```
 your_workspace/frontend/dist/
@@ -133,7 +133,7 @@ mod yew{
     pub fn make_service(s: AppState) -> ServeYew<Asset, BrotliTrunkPacked, BrotliAssets, G, AppState> {
         use std::collections::BTreeMap;
 
-        // todo: currently in compression mode, these assets have to be manually mapped
+        // todo: currently in compression mode, svg assets have to be manually added
         let mut m = BTreeMap::new();
         m.insert("logo.svg", "logo-6fe88bf3de22ed271405d7597167aa85.svg.br");
 
@@ -198,6 +198,7 @@ mod yew{
             headers: HashMap<HeaderName, HeaderValue>, // your interested headers
             Cookies(cookie_jar, signed_cookie_jar): Self::Cookies,
         ) -> impl std::future::Future<Output = (String, Self::Cookies)> + Send {
+            // SAFETY: it must be valid utf8 when included from the macro
             let html = unsafe { std::str::from_utf8_unchecked(&data) }.to_string();
             // ...
 
@@ -217,11 +218,10 @@ mod yew{
                 .render()
                 .await;
 
-                // you can do something to body_s here
-
+                let final_html = todo!("normally you want some parsing to find the body tag in `html` and insert `body_s` there");
 
                 (
-                    body_s,
+                    final_html, // trunk-compress will serve your html with run-time compression.
                     Cookies(
                     // ...
                     ),
