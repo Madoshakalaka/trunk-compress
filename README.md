@@ -1,4 +1,4 @@
-This is what you get:
+This is what you will get with the help of `trunk-compress`):
 
 ```
 your_workspace/frontend/dist/
@@ -18,9 +18,12 @@ your_workspace/frontend/dist/
     └── logo-686e460831c5276f.svg
 ```
 
+And all these will embed into your server binary, with the files served from memory when you run your server.
+
 # Usage
 
-warning: not very configurable yet. PRs welcome.
+> [!NOTE]  
+> Not very configurable yet. PRs welcome.
 
 To use this, you are expected to have the following directory structure,
 
@@ -286,4 +289,46 @@ you can manually run `trunk-compress` at the backend directory and see what exac
 2023-12-19T08:21:49.221114Z  INFO trunk_compress: Done compressing frontend-d8e8be0b5ce78d74_bg.wasm
 2023-12-19T08:21:49.221145Z  INFO trunk_compress: outputing target "../frontend/dist/brotli/logo-686e460831c5276f.svg.br"
 2023-12-19T08:21:49.229095Z  INFO trunk_compress: Done compressing logo-686e460831c5276f.svg
+```
+
+
+# Use it in Workflows
+
+```yml
+steps: 
+  - name: Checkout Project
+    uses: actions/checkout@v4
+
+  - name: Setup trunk-compress
+    run: wget -nv https://github.com/Madoshakalaka/trunk-compress/releases/latest/download/trunk-compress && chmod +x ./trunk-compress && mv trunk-compress /usr/local/bin
+
+  - name: Setup Rust
+    uses: dtolnay/rust-toolchain@master
+    with:
+      toolchain: nightly-2024-10-09
+      targets: wasm32-unknown-unknown, x86_64-unknown-linux-musl
+      components: clippy
+
+  - name: Restore Rust Cache
+    uses: Swatinem/rust-cache@v2
+
+  - name: Setup trunk
+    uses: jetli/trunk-action@v0.5.0
+    with:
+      version: 'latest'
+
+  - name: build frontend
+    run: mkdir -p frontend/dist/identity && mkdir -p frontend/dist/brotli trunk build --release 
+
+
+  - name: Build Backend
+    run: cargo build -p backend --features compression --release 
+
+  - uses: actions/upload-artifact@v4
+    with:
+      name: new-build
+      path: target/release/backend
+
+# Enoying deploying a single `backend` executible as your whole App!
+# ...
 ```
