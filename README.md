@@ -1,4 +1,4 @@
-This is what you will get with the help of `trunk-compress`):
+This is what you will get with the help of `trunk-compress`:
 
 ```
 your_workspace/frontend/dist/
