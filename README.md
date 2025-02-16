@@ -121,7 +121,7 @@ mod yew{
     serve_yew::brotli_code!(BrotliTrunkPacked);
     serve_yew::brotli_assets!(BrotliAssets);
 
-    // these will header values will be available to your render function
+    // these header values will be available to your render function
     fn interested_headers() -> HashSet<HeaderName> {
         let mut headers = HashSet::new();
         headers.insert(http::header::USER_AGENT);
