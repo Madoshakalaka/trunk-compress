@@ -20,7 +20,7 @@ your_workspace/frontend/dist/
 
 # Usage
 
-warning: recently publicized internal code, not very configurable yet. PRs welcome.
+warning: not very configurable yet. PRs welcome.
 
 To use this, you are expected to have the following directory structure,
 
@@ -87,26 +87,188 @@ fn main() {
 - It won't compress video and audio in the `assets` folder, it guesses the filetype through the suffix.
 - It won't compress images in the `assets` folder, except svgs.
 - It attaches hashes to the compressed asset files, when it runs again, it will compute the hashes of the identity files. Remove only outdated compressed files, and avoid re-compressing already compressed files.
-- The smart behavior above also works for files packed by trunk, 
-- It expects the identity files to have one suffix only, it may or may not work with files with multiple suffixes due to wonky parsing idk.
+- The smart behavior above also works for files packed by trunk.
+- Comes with a `/version` endpoint that returns the hash of the frontend.
+- By using `/version` and SSE, we provide a frontend `use_reload` yew hook that will reload the page after a disconnect to the backend. This is ideal to reload your deployed apps when you restart your production backend. It can also be used in development.
 
 # Serve the files
 
-I have a `tower` service called `ServeYew` that serves this directory structure, which can be integrated to an axum service by:
+Look at the `tower` service called `serve_yew::ServeYew` that serves this directory structure, which can be integrated to an axum service by:
 
 ```rs
 let app = Router::new()
     // .nest("/api", api::routes())
-    .fallback_service(ServeYew::new(db.clone()));
+    .fallback_service(yew::make_service(app_state.clone()));
+
+mod yew{
+
+    use std::{
+        collections::{HashMap, HashSet},
+    };
+
+    use axum::{response::IntoResponse, RequestExt as _};
+    use http::{HeaderName, HeaderValue};
+    use serve_yew::{Process, ServeYew, WriteHeaders};
+    // your own AppState
+    use crate::AppState;
+
+    // magic
+    serve_yew::index!(INDEX);
+    serve_yew::identity!(Asset);
+    serve_yew::brotli_code!(BrotliTrunkPacked);
+    serve_yew::brotli_assets!(BrotliAssets);
+
+    // these will header values will be available to your render function
+    fn interested_headers() -> HashSet<HeaderName> {
+        let mut headers = HashSet::new();
+        headers.insert(http::header::USER_AGENT);
+        headers.insert(http::header::ACCEPT_LANGUAGE);
+        headers
+    }
+
+    #[cfg(feature = "compression")]
+    pub fn make_service(s: AppState) -> ServeYew<Asset, BrotliTrunkPacked, BrotliAssets, G, AppState> {
+        use std::collections::BTreeMap;
+
+        // todo: currently in compression mode, these assets have to be manually mapped
+        let mut m = BTreeMap::new();
+        m.insert("logo.svg", "logo-6fe88bf3de22ed271405d7597167aa85.svg.br");
+
+        ServeYew::new(G, s, interested_headers(), m, INDEX)
+    }
+
+    #[cfg(not(feature = "compression"))]
+    pub fn make_service(s: AppState) -> ServeYew<Asset, G, AppState> {
+        ServeYew::new(G, s, interested_headers())
+    }
+
+    // Your own middleware, which needs to implement `Process`, shown below
+    #[derive(Clone)]
+    pub struct G;
+
+    // Your own cookie collection type, an example here.
+    #[derive(Clone)]
+    pub struct Cookies(SignedCookieJar, SignedCookieJar<TransientKey>);
+
+    // How do you write cookie headers to the response? Example implementation here.
+    impl WriteHeaders for Cookies {
+        fn write_headers(&self, headers: &mut http::header::HeaderMap) {
+            for (k, v) in self.0.clone().into_response().into_parts().0.headers {
+                if let Some(k) = k {
+                    headers.insert(k, v);
+                }
+            }
+            for (k, v) in self.1.clone().into_response().into_parts().0.headers {
+                if let Some(k) = k {
+                    headers.insert(k, v);
+                }
+            }
+        }
+    }
+
+    impl Process for G {
+        type State = AppState;
+
+        type Cookies = Cookies;
+
+        // how do you extract cookies from the request?
+        fn get_cookies(&self, request: axum::extract::Request, app_state: &Self::State) -> impl std::future::Future<Output = Self::Cookies> + Send {
+            let mut request = request;
+            async move {
+                let signed_cookie_jar = request
+                    .extract_parts_with_state::<SignedCookieJar<TransientKey>, _>(app_state)
+                    .await
+                    .unwrap();
+
+                let cookie_jar = request.extract_with_state::<SignedCookieJar, _, _>(app_state).await.unwrap();
+                Cookies(cookie_jar, signed_cookie_jar)
+            }
+        }
+
+        // how do you render the response?
+        fn render(
+            &self,
+            data: std::borrow::Cow<'static, [u8]>, // index.html
+            path: String, // uri path
+            queries: HashMap<String, String>,
+            app_state: &Self::State,
+            headers: HashMap<HeaderName, HeaderValue>, // your interested headers
+            Cookies(cookie_jar, signed_cookie_jar): Self::Cookies,
+        ) -> impl std::future::Future<Output = (String, Self::Cookies)> + Send {
+            let html = unsafe { std::str::from_utf8_unchecked(&data) }.to_string();
+            // ...
+
+            async move {
+                // ...
+                let body_s = {
+
+                    ::yew::ServerRenderer::<ServerApp>::with_props(move || {
+                        ServerAppProps {
+                          // ... Your SSR props
+                          // possibly mutating cookies
+                          // possibly utilizing headers
+                          // possibly utilizing queries or path from the request uri
+                        }
+                    })
+                }
+                .render()
+                .await;
+
+                // you can do something to body_s here
+
+
+                (
+                    body_s,
+                    Cookies(
+                    // ...
+                    ),
+                )
+            }
+        }
+    }
+}
 ```
 
-The service serves the compressed file if it exists and sets the content type headers, cache headers etc
+> [!IMPORTANT]  
+> The macros expect your crate to have a `compression` feature. Use the following in your `Cargo.toml` Please.
 
-It also has a feature gate `compression` that when disabled, serves everything uncompressed instead, useful in local development environment.
+```toml
+[dependencies]
+serve-yew = { git = "..." }
 
-It's not extracted into a crate yet.
+[features]
+# name is important
+compression = ["serve-yew/compression"]
 
-Please refer to [serve_yew.rs](serve_yew.rs) and adapt to your own usage. If you use the compression feature, I recommend gating the `main()` in `build.rs` with `#[cfg(feature = "compression")]`
+# opt-in: shows a OS popup when a frontend is reloaded (useful in development)
+reload = ["serve-yew/dev-reload"]
+```
+
+In your frontend, you should have this Cargo.toml:
+
+```toml
+[dependencies]
+dev-reload = {git ="..."}
+```
+
+
+and this in your `App`:
+
+```rs
+#[function_component]
+pub fn App() -> Html {
+    dev_reload::use_reload();
+
+    html! {
+    // ...
+    }
+}
+```
+
+
+`ServeYew` serves the compressed file if it exists and sets the content type headers, cache headers etc
+
+When `serve_yew/compression` is disabled, it serves everything uncompressed instead, useful in local development environment.
 
 # Something Not Expected?
 
