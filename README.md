@@ -92,7 +92,7 @@ fn main() {
 - It attaches hashes to the compressed asset files, when it runs again, it will compute the hashes of the identity files. Remove only outdated compressed files, and avoid re-compressing already compressed files.
 - The smart behavior above also works for files packed by trunk.
 - Comes with a `/version` endpoint that returns the hash of the frontend.
-- By using `/version` and SSE, we provide a frontend `use_reload` yew hook that will reload the page after a disconnect to the backend. This is ideal to reload your deployed apps when you restart your production backend. It can also be used in development.
+- By using `/version` and SSE, we provide a frontend `use_reload` yew hook that will reload the page after a disconnect to the backend. This is ideal to reload your deployed apps when a new version is deployed to your production backend. It can also be used in development for hot-reloading.
 
 # Serve the files
 
@@ -122,7 +122,7 @@ mod yew{
     // if you don't have any assets, comment out the line below
     serve_yew::brotli_assets!(BrotliAssets);
 
-    // these will header values will be available to your render function
+    // these header values will be available to your render function
     fn interested_headers() -> HashSet<HeaderName> {
         let mut headers = HashSet::new();
         headers.insert(http::header::USER_AGENT);
