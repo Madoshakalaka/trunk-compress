@@ -60,6 +60,7 @@ dist = "frontend/dist/identity"
 
 ```rs
 fn main() {
+    #[cfg(feature = "compression")]
     {
         use std::process::Command;
         // FYI: this seems always to be the parent of src, even if one runs cargo build at workspace root
@@ -83,7 +84,6 @@ fn main() {
     }
 }
 ```
-
 
 # Features
 
@@ -117,8 +117,9 @@ mod yew{
 
     // magic
     serve_yew::index!(INDEX);
-    serve_yew::identity!(Asset);
+    serve_yew::identity!(Files);
     serve_yew::brotli_code!(BrotliTrunkPacked);
+    // if you don't have any assets, comment out the line below
     serve_yew::brotli_assets!(BrotliAssets);
 
     // these will header values will be available to your render function
@@ -129,8 +130,9 @@ mod yew{
         headers
     }
 
+    // if you don't have any assets, swap BrotliAssets with serve_yew::NoAssets
     #[cfg(feature = "compression")]
-    pub fn make_service(s: AppState) -> ServeYew<Asset, BrotliTrunkPacked, BrotliAssets, G, AppState> {
+    pub fn make_service(s: AppState) -> ServeYew<Files, BrotliTrunkPacked, BrotliAssets, G, AppState> {
         use std::collections::BTreeMap;
 
         // todo: currently in compression mode, svg assets have to be manually added
@@ -141,7 +143,7 @@ mod yew{
     }
 
     #[cfg(not(feature = "compression"))]
-    pub fn make_service(s: AppState) -> ServeYew<Asset, G, AppState> {
+    pub fn make_service(s: AppState) -> ServeYew<Files, G, AppState> {
         ServeYew::new(G, s, interested_headers())
     }
 

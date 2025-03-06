@@ -25,7 +25,7 @@ use bytes::Bytes;
 use derive_more::{Deref, DerefMut, From};
 use futures::future::BoxFuture;
 use http::{header, HeaderName, HeaderValue, Response, StatusCode};
-use rust_embed::EmbeddedFile;
+use rust_embed::{EmbeddedFile, Filenames};
 use tower_service::Service;
 
 #[macro_export]
@@ -66,6 +66,26 @@ macro_rules! index {
         #[cfg(feature = "compression")]
         const $name: &[u8] = include_bytes!("../../frontend/dist/identity/index.html");
     };
+}
+
+#[derive(Clone)]
+pub struct NoAssets;
+
+impl RustEmbed for NoAssets {
+    fn get(_file_path: &str) -> Option<EmbeddedFile> {
+        None
+    }
+
+    fn iter() -> Filenames {
+        #[cfg(debug_assertions)]
+        {
+            Filenames::Dynamic(Box::new(std::iter::empty()))
+        }
+        #[cfg(not(debug_assertions))]
+        {
+            Filenames::Embedded([].iter())
+        }
+    }
 }
 
 #[derive(Debug, From, Deref, DerefMut)]
@@ -145,7 +165,6 @@ pub struct ServeYew<
     brotli_asset_mapping: BTreeMap<&'static str, &'static str>,
     #[cfg(feature = "compression")]
     index: &'static [u8],
-    // state: AppState,
     g: G,
     app_state: S,
     headers: HashSet<HeaderName>,
@@ -577,5 +596,3 @@ fn version(v: String) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
 
     Sse::new(stream).keep_alive(KeepAlive::new().interval(Duration::from_secs(15)))
 }
-
-
