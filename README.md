@@ -20,7 +20,21 @@ your_workspace/frontend/dist/
 
 And all these will embed into your server binary, with the files served from memory when you run your server.
 
+
+# Features
+
+- Trunk-compress avoids compressing videos and audios in the `assets` folder, it guesses the filetype through the suffix.
+- Trunk-compress avoids compressing images in the `assets` folder, except for svgs.
+- Trunk-compress generates compressed files with hashes attached to their filenames. When trunk-compress runs again, it will compare the hashes with those in the identity folder and remove only outdated compressed files, and avoid re-compressing already compressed files.
+- Trunk-compress recognizes and uses hashes attaches by trunk.
+- The `serve-yew` service crate comes with a `/version` endpoint that returns the hash of the frontend.
+- By using `/version` and SSE (server side events), we provide a frontend `use_reload` yew hook that will reload the page after a disconnect to the backend. This is ideal to reload your deployed apps when a new version is deployed to your production backend. It can also be used in development for hot-reloading.
+
 # Usage
+
+Try this template for a battery-included fast start <https://github.com/Madoshakalaka/trunk-compress-template>
+
+Read on for more explanation.
 
 > [!NOTE]  
 > Not very configurable yet. PRs welcome.
@@ -29,7 +43,7 @@ To use this, you are expected to have the following directory structure,
 
 ```
 your_workspace
-├── ssr_server
+├── backend
 │   ├── build.rs
 │   ├── Cargo.toml
 │   └── src
@@ -85,15 +99,6 @@ fn main() {
 }
 ```
 
-# Features
-
-- It won't compress video and audio in the `assets` folder, it guesses the filetype through the suffix.
-- It won't compress images in the `assets` folder, except svgs.
-- It attaches hashes to the compressed asset files, when it runs again, it will compute the hashes of the identity files. Remove only outdated compressed files, and avoid re-compressing already compressed files.
-- The smart behavior above also works for files packed by trunk.
-- Comes with a `/version` endpoint that returns the hash of the frontend.
-- By using `/version` and SSE, we provide a frontend `use_reload` yew hook that will reload the page after a disconnect to the backend. This is ideal to reload your deployed apps when a new version is deployed to your production backend. It can also be used in development for hot-reloading.
-
 # Serve the files
 
 Look at the `tower` service called `serve_yew::ServeYew` that serves this directory structure, which can be integrated to an axum service by:
@@ -119,7 +124,7 @@ mod yew{
     serve_yew::index!(INDEX);
     serve_yew::identity!(Files);
     serve_yew::brotli_code!(BrotliTrunkPacked);
-    // if you don't have any assets, comment out the line below
+    // if you don't have any compressable assets (like svg files), comment out the line below
     serve_yew::brotli_assets!(BrotliAssets);
 
     // these header values will be available to your render function
@@ -135,7 +140,7 @@ mod yew{
     pub fn make_service(s: AppState) -> ServeYew<Files, BrotliTrunkPacked, BrotliAssets, G, AppState> {
         use std::collections::BTreeMap;
 
-        // todo: currently in compression mode, svg assets have to be manually added
+        // todo: currently in compression mode, compressed assets have to be manually added
         let mut m = BTreeMap::new();
         m.insert("logo.svg", "logo-6fe88bf3de22ed271405d7597167aa85.svg.br");
 
@@ -273,7 +278,7 @@ pub fn App() -> Html {
 
 `ServeYew` serves the compressed file if it exists and sets the content type headers, cache headers etc
 
-When `serve_yew/compression` is disabled, it serves everything uncompressed instead, useful in local development environment.
+When `serve_yew/compression` is disabled, it serves everything uncompressed instead, useful in development.
 
 # Something Not Expected?
 
@@ -324,7 +329,7 @@ steps:
 
 
   - name: Build Backend
-    run: cargo build -p backend --features compression --release 
+    run: cargo build -p backend --features compression,journald --release 
 
   - uses: actions/upload-artifact@v4
     with:
