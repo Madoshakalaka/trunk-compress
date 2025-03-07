@@ -101,7 +101,7 @@ fn main() {
 
 # Serve the files
 
-Look at the `tower` service called `serve_yew::ServeYew` that serves this directory structure, which can be integrated to an axum service by:
+We provide a tower service `serve_yew::ServeYew` to be used in axum:
 
 ```rs
 let app = Router::new()
