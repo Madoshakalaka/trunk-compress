@@ -26,7 +26,7 @@ And all these will embed into your server binary, with the files served from mem
 - Trunk-compress avoids compressing videos and audios in the `assets` folder, it guesses the filetype through the suffix.
 - Trunk-compress avoids compressing images in the `assets` folder, except for svgs.
 - Trunk-compress generates compressed files with hashes attached to their filenames. When trunk-compress runs again, it will compare the hashes with those in the identity folder and remove only outdated compressed files, and avoid re-compressing already compressed files.
-- Trunk-compress recognizes and uses hashes attaches by trunk.
+- Trunk-compress recognizes and uses hashes attached by trunk.
 - The `serve-yew` service crate comes with a `/version` endpoint that returns the hash of the frontend.
 - By using `/version` and SSE (server side events), we provide a frontend `use_reload` yew hook that will reload the page after a disconnect to the backend. This is ideal to reload your deployed apps when a new version is deployed to your production backend. It can also be used in development for hot-reloading.
 
@@ -101,7 +101,7 @@ fn main() {
 
 # Serve the files
 
-Look at the `tower` service called `serve_yew::ServeYew` that serves this directory structure, which can be integrated to an axum service by:
+We provide a tower service `serve_yew::ServeYew` to be used in axum:
 
 ```rs
 let app = Router::new()
