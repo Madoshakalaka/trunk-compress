@@ -1,6 +1,6 @@
 [package]
 name = "serve-yew"
-version = "0.1.4"
+version = "0.1.6"
 edition = "2021"
 
 
@@ -17,6 +17,7 @@ rust-embed = "8.0"
 
 tokio = { version = "1.35" }
 tower-service = "0.3.3"
+tracing = "0.1.41"
 
 
 # Optional dependencies

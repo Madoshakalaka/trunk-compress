@@ -2010,6 +2010,7 @@ dependencies = [
  "rust-embed",
  "tokio",
  "tower-service",
+ "tracing",
 ]
 
 [[package]]

@@ -27,6 +27,7 @@ use futures::future::BoxFuture;
 use http::{header, HeaderName, HeaderValue, Response, StatusCode};
 use rust_embed::{EmbeddedFile, Filenames};
 use tower_service::Service;
+use tracing::error;
 
 #[macro_export]
 macro_rules! identity {
@@ -587,7 +588,11 @@ impl<C: Clone + WriteHeaders> Future for ResponseFuture<C> {
 
 fn version(v: String) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
     #[cfg(feature = "dev-reload")]
-    notify_rust::Notification::new().summary("connected");
+    {
+        if let Err(e) = notify_rust::Notification::new().summary("connected").show() {
+            error!("{e}");
+        }
+    }
 
     let version_event =
         futures::stream::once(async move { Ok(Event::default().event("version").data(v)) });
