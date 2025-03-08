@@ -19,14 +19,14 @@ pub fn use_reload() {
                 match current_version {
                     Some(v) => {
                         if v == backend_version {
-                            gloo_console::info!(format!("backend version is the same: {}", v));
+                            tracing::debug!("backend version is the same: {v}");
                         } else {
                             // refresh the page
                             web_sys::window().unwrap().location().reload().unwrap();
                         }
                     }
                     None => {
-                        gloo_console::info!(format!("backend version: {}", backend_version));
+                        tracing::debug!("backend version: {backend_version}");
                         *version.borrow_mut() = Some(backend_version);
                     }
                 }

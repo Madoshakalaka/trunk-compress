@@ -568,9 +568,9 @@ name = "dev-reload"
 version = "0.1.6"
 dependencies = [
  "futures",
- "gloo-console 0.3.0",
  "gloo-net 0.6.0",
  "gloo-utils 0.2.0",
+ "tracing",
  "web-sys",
  "yew",
 ]
