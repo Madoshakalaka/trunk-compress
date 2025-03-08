@@ -2,7 +2,7 @@
 members = [
 	"cli"
 , "dev-reload", "serve-yew"]
-resolver = "2"
+resolver = "3"
 
 [profile.release]
 codegen-units = 1

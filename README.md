@@ -251,7 +251,7 @@ serve-yew = { git = "..." }
 compression = ["serve-yew/compression"]
 
 # opt-in: shows a OS popup when a frontend is reloaded (useful in development)
-reload = ["serve-yew/dev-reload"]
+dev-reload = ["serve-yew/dev-reload"]
 ```
 
 In your frontend, you should have this Cargo.toml:

@@ -565,7 +565,7 @@ dependencies = [
 
 [[package]]
 name = "dev-reload"
-version = "0.1.4"
+version = "0.1.6"
 dependencies = [
  "futures",
  "gloo-console 0.3.0",
@@ -1997,7 +1997,7 @@ dependencies = [
 
 [[package]]
 name = "serve-yew"
-version = "0.1.4"
+version = "0.1.6"
 dependencies = [
  "async-compression",
  "axum",
@@ -2340,7 +2340,7 @@ dependencies = [
 
 [[package]]
 name = "trunk-compress"
-version = "0.1.4"
+version = "0.1.6"
 dependencies = [
  "anyhow",
  "async-compression",
