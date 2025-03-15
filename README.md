@@ -11,7 +11,7 @@ your_workspace/frontend/dist/
 └── identity
     ├── assets
     │   ├── logo.svg
-    │   └── mebutlowquality.jpg
+    │   └── myphoto.jpg
     ├── frontend-d8e8be0b5ce78d74_bg.wasm
     ├── frontend-d8e8be0b5ce78d74.js
     ├── index.html
