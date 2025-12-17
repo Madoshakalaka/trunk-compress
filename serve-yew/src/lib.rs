@@ -27,7 +27,6 @@ use futures::future::BoxFuture;
 use http::{header, HeaderName, HeaderValue, Response, StatusCode};
 use rust_embed::{EmbeddedFile, Filenames};
 use tower_service::Service;
-use tracing::error;
 
 #[macro_export]
 macro_rules! identity {
